@@ -37,7 +37,7 @@ A basic online Lua obfuscator for Roblox scripts. This project is currently in i
 
 ## Contact
 
-For suggestions or updates, visit [your website link] or reach out via email.  
+For suggestions or updates, join my discord via guns.lol page on my profile.  
 
 ---
 
