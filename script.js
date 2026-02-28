@@ -1,4 +1,38 @@
-// script.js
+window.addEventListener('load', function() {
+    const overlay = document.getElementById('verificationOverlay');
+    const progressBar = document.getElementById('verificationProgress');
+    const statusText = document.getElementById('verificationStatus');
+    const mainContent = document.getElementById('mainContent');
+    
+    const steps = [
+        { text: "Initializing security protocols...", progress: 20 },
+        { text: "Checking browser integrity...", progress: 40 },
+        { text: "Verifying human presence...", progress: 60 },
+        { text: "Analyzing behavior patterns...", progress: 80 },
+        { text: "Verification complete! Redirecting...", progress: 100 }
+    ];
+    
+    let currentStep = 0;
+    
+    // Update Discord button with config URL
+    document.getElementById('discordButton').href = CONFIG.discordUrl;
+    document.getElementById('versionDisplay').textContent = 'v' + CONFIG.version;
+    
+    const interval = setInterval(() => {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            statusText.textContent = step.text;
+            progressBar.style.width = step.progress + '%';
+            currentStep++;
+        } else {
+            clearInterval(interval);
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                mainContent.style.opacity = '1';
+            }, 500);
+        }
+    }, CONFIG.verificationDelay / steps.length);
+});
 let originalCode = '';
 
 function switchTab(tabId) {
