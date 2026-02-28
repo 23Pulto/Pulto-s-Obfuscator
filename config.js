@@ -1,4 +1,4 @@
 const CONFIG = {
-    version: "v1.0.0",
-    link: "https://pultoobfuscator.com/obfuscate"
+    version: "v1.0.1",
+    link: "https://23pulto.github.io/Pulto-s-Obfuscator/"
 };
