@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title> Pulto's Obfuscator - Maintenance</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0c0f;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Subtle animated background - iPhone friendly */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(62, 166, 255, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(62, 166, 255, 0.05) 0%, transparent 50%);
+            z-index: 0;
+            animation: bg-pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bg-pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Subtle rain effect - optimized for mobile */
+        .rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .rain-drop {
+            position: absolute;
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(180deg, #3ea6ff, transparent);
+            animation: rain-fall 3s linear infinite;
+        }
+
+        @keyframes rain-fall {
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Main container */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 1100px;
+            margin: 20px;
+            padding: 30px;
+            background: rgba(15, 18, 22, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(62, 166, 255, 0.2);
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            animation: container-appear 0.8s ease-out;
+        }
+
+        @keyframes container-appear {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-wrapper {
+            display: inline-block;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            font-size: clamp(32px, 8vw, 56px);
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #3ea6ff 0%, #7fcdff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            animation: logo-shimmer 3s infinite;
+            text-shadow: 0 0 20px rgba(62, 166, 255, 0.3);
+        }
+
+        @keyframes logo-shimmer {
+            0%, 100% { 
+                background-position: 0% 50%;
+                text-shadow: 0 0 20px rgba(62, 166, 255, 0.3);
+            }
+            50% { 
+                background-position: 100% 50%;
+                text-shadow: 0 0 30px rgba(62, 166, 255, 0.5);
+            }
+        }
+
+        .version {
+            position: absolute;
+            top: -10px;
+            right: -30px;
+            background: rgba(62, 166, 255, 0.2);
+            border: 1px solid #3ea6ff;
+            color: #3ea6ff;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            animation: version-pulse 2s infinite;
+        }
+
+        @keyframes version-pulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(62, 166, 255, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(62, 166, 255, 0.6); }
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        /* Stats Grid - Mobile friendly */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(10, 12, 15, 0.5);
+            border: 1px solid rgba(62, 166, 255, 0.2);
+            border-radius: 24px;
+            padding: 20px 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .stat-card:hover {
+            border-color: #3ea6ff;
+            transform: translateY(-5px);
+            background: rgba(62, 166, 255, 0.05);
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: stat-float 3s ease-in-out infinite;
+        }
+
+        .stat-card:nth-child(2) .stat-icon { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) .stat-icon { animation-delay: 0.4s; }
+
+        @keyframes stat-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .stat-value {
+            font-size: clamp(24px, 5vw, 36px);
+            font-weight: 800;
+            color: #3ea6ff;
+            line-height: 1.2;
+            margin-bottom: 5px;
+            font-feature-settings: "tnum";
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #3ea6ff20, #3ea6ff05);
+            border: 1px solid #3ea6ff40;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            margin-top: 8px;
+            color: #3ea6ff;
+        }
+
+        /* Maintenance Card */
+        .maintenance-card {
+            background: rgba(10, 12, 15, 0.7);
+            border: 1px solid #3ea6ff30;
+            border-radius: 32px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .maintenance-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid #ffaa00;
+            padding: 8px 16px;
+            border-radius: 40px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #ffaa00;
+            border-radius: 50%;
+            animation: status-pulse 1.5s infinite;
+        }
+
+        @keyframes status-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .status-text {
+            color: #ffaa00;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .maintenance-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .eta-badge {
+            margin-left: auto;
+            background: #3ea6ff20;
+            border: 1px solid #3ea6ff;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #3ea6ff;
+            font-weight: 600;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 73%;
+            background: linear-gradient(90deg, #3ea6ff, #7fcdff);
+            border-radius: 4px;
+            animation: progress-pulse 2s infinite;
+            position: relative;
+        }
+
+        @keyframes progress-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 1px solid rgba(62, 166, 255, 0.1);
+        }
+
+        .info-item .label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .info-item .value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #3ea6ff;
+        }
+
+        /* ASCII Art - Responsive */
+        .ascii-container {
+            margin: 25px 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .ascii-art {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(8px, 2vw, 11px);
+            line-height: 1.3;
+            color: #3ea6ff;
+            white-space: pre;
+            padding: 20px;
+            min-width: min-content;
+        }
+
+        /* Discord Button */
+        .discord-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #5865F2;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 60px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            max-width: 400px;
+            margin: 30px auto 0;
+            box-shadow: 0 10px 20px rgba(88, 101, 242, 0.3);
+        }
+
+        .discord-button:hover {
+            background: #4752c4;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(88, 101, 242, 0.4);
+        }
+
+        .discord-button i {
+            font-size: 20px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 12px;
+            color: #666;
+        }
+
+        .footer span {
+            margin: 0 10px;
+        }
+
+        /* iPhone specific optimizations */
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+                border-radius: 30px;
+            }
+
+            .stats-grid {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px 5px;
+            }
+
+            .stat-icon {
+                font-size: 20px;
+            }
+
+            .maintenance-card {
+                padding: 20px;
+            }
+
+            .maintenance-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .eta-badge {
+                margin-left: 0;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .discord-button {
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Landscape mode */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .stats-grid {
+                margin-bottom: 20px;
+            }
+
+            .maintenance-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-gradient"></div>
+    
+    <!-- Subtle Rain -->
+    <div class="rain" id="rain"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-wrapper">
+                <div class="logo">PULTO'S OBFUSCATOR</div>
+                <span class="version">v1.0.1</span>
+            </div>
+            <div class="subtitle">#1 Anti-Skid Protection System</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value">3,000</div>
+                <div class="stat-label">Estimated Users</div>
+                <div class="stat-badge">+127% this month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔒</div>
+                <div class="stat-value">4,825</div>
+                <div class="stat-label">Obfuscated Codes</div>
+                <div class="stat-badge">1.4M lines protected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value">#1</div>
+                <div class="stat-label">Anti-Skid Program</div>
+                <div class="stat-badge">98% success rate</div>
+            </div>
+        </div>
+
+        <!-- Maintenance Card -->
+        <div class="maintenance-card">
+            <div class="maintenance-header">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">MAINTENANCE MODE</span>
+                </div>
+                <div class="maintenance-title">System Upgrade in Progress</div>
+                <div class="eta-badge">ETA: 1-3 DAYS</div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span>Upgrade Progress</span>
+                    <span>73%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 73%;"></div>
+                </div>
+            </div>
+
+            <!-- Info Grid -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">Current Status</div>
+                    <div class="value">Fixing Obfuscating vulnerabilities</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Next Update</div>
+                    <div class="value">🛡️ Adding 3 more protection layers</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Queue Position</div>
+                    <div class="value">📊 #247 of 3,000 users</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Est. Wait Time</div>
+                    <div class="value">⏳ 1-3 days</div>
+                </div>
+            </div>
+
+            <!-- ASCII Art -->
+            <div class="ascii-container">
+                <pre class="ascii-art">
+╔══════════════════════════════════════════════════════════╗
+║              PULTO'S OBFUSCATOR v1.0.1                   ║
+║     https://23pulto.github.io/Pulto-s-Obfuscator/        ║
+╠══════════════════════════════════════════════════════════╣
+║                                                          ║
+║     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ║
+║     ░█▀▀░█▀█░█▀▄░█▀▀░█░█░░░█▀▀░█▀█░█▀▄░█▀▀░█░█░░░░       ║
+║     ░█░░░█░█░█░█░█▀▀░▄▀▄░░░█░░░█░█░█░█░█▀▀░▄▀▄░░░░       ║
+║     ░▀▀▀░▀▀▀░▀▀░░▀▀▀░▀░▀░░░▀▀▀░▀▀▀░▀▀░░▀▀▀░▀░▀░░░░       ║
+║     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
+                </pre>
+            </div>
+
+            <!-- Discord Button -->
+            <a href="#" id="discordButton" class="discord-button" target="_blank">
+                <i class="fab fa-discord"></i>
+                <span>Join Discord for Updates</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span>© 2024 Pulto's Obfuscator</span>
+            <span>•</span>
+            <span>Protecting Code Since 2024</span>
+            <span>•</span>
+            <span>Anti-Skid Certified</span>
+        </div>
+    </div>
+
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+
+    <!-- Scripts -->
+    <script>
+        // Create rain effect (optimized for mobile)
+        function createRain() {
+            const rainContainer = document.getElementById('rain');
+            const dropCount = window.innerWidth < 768 ? 30 : 50;
+            
+            for (let i = 0; i < dropCount; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'rain-drop';
+                drop.style.left = Math.random() * 100 + '%';
+                drop.style.animationDelay = Math.random() * 3 + 's';
+                drop.style.animationDuration = (2 + Math.random() * 2) + 's';
+                drop.style.opacity = Math.random() * 0.3;
+                rainContainer.appendChild(drop);
+            }
+        }
+
+        // Update Discord link
+        document.getElementById('discordButton').href = 'https://discord.gg/YOUR_DISCORD_INVITE';
+
+        // Animated counter for stats
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= end) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current).toLocaleString();
+            }, 16);
+        }
+
+        // Start counters when page loads
+        window.addEventListener('load', () => {
+            createRain();
+            
+            // Animate stats
+            setTimeout(() => {
+                const userStat = document.querySelector('.stat-card:nth-child(1) .stat-value');
+                const codeStat = document.querySelector('.stat-card:nth-child(2) .stat-value');
+                
+                if (userStat) animateValue(userStat, 2800, 3000, 2000);
+                if (codeStat) animateValue(codeStat, 4600, 4825, 2000);
+            }, 500);
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            const rainContainer = document.getElementById('rain');
+            rainContainer.innerHTML = '';
+            createRain();
+        });
+    </script>
+</body>
+</html>
+
