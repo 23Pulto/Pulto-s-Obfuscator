@@ -4,30 +4,57 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let letters = "01";
-let fontSize = 14;
-let columns = canvas.width / fontSize;
-let drops = [];
+// Raindrop settings
+const raindrops = [];
+const dropCount = 200; 
+const dropSpeedMin = 4;
+const dropSpeedMax = 10;
 
-for (let x = 0; x < columns; x++)
-    drops[x] = 1;
-
-function draw() {
-    ctx.fillStyle = "rgba(18,20,24,0.1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#3ea6ff";
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-        let text = letters.charAt(Math.floor(Math.random() * letters.length));
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
-            drops[i] = 0;
-
-        drops[i]++;
-    }
+// Generate raindrops
+for (let i = 0; i < dropCount; i++) {
+    raindrops.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        length: Math.random() * 20 + 10,
+        speed: Math.random() * (dropSpeedMax - dropSpeedMin) + dropSpeedMin,
+        width: Math.random() * 1.5 + 0.5
+    });
 }
 
-setInterval(draw, 33);
+// Draw raindrops with blur trail
+function drawRain() {
+    // Slightly fade previous frame for motion blur effect
+    ctx.fillStyle = "rgba(20,20,25,0.2)"; // matches your dark grey background
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "#3ea6ff"; // Blue color
+    ctx.lineCap = "round";
+
+    raindrops.forEach(drop => {
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x, drop.y + drop.length);
+        ctx.lineWidth = drop.width;
+        ctx.stroke();
+
+        drop.y += drop.speed;
+
+        // Reset drop when off-screen
+        if (drop.y > canvas.height) {
+            drop.y = -drop.length;
+            drop.x = Math.random() * canvas.width;
+            drop.speed = Math.random() * (dropSpeedMax - dropSpeedMin) + dropSpeedMin;
+            drop.length = Math.random() * 20 + 10;
+        }
+    });
+
+    requestAnimationFrame(drawRain);
+}
+
+drawRain();
+
+// Handle resizing
+window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
