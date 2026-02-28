@@ -1,7 +1,7 @@
 const CONFIG = {
     version: "v1.0.1",
     link: "https://23pulto.github.io/Pulto-s-Obfuscator/",
-    discordUrl: "https://discord.gg/YOUR_DISCORD_INVITE",
+    discordUrl: "https://discord.gg/H3KWyw5mBy",
     musicUrl: "background_Music.mp3",
     verificationDelay: 3000,
     features: {
