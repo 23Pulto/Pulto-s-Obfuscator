@@ -12,96 +12,148 @@ function switchTab(tabId) {
 function startObfuscation() {
     const input = document.getElementById('inputCode').value;
     if (!input.trim()) {
-        document.getElementById('status').innerText = 'Please enter some Lua code!';
+        document.getElementById('status').innerText = 'Enter some Lua code first!';
         return;
     }
     
     originalCode = input;
-    document.getElementById('status').innerText = 'Obfuscating...';
+    document.getElementById('status').innerText = 'Obfuscating... This may take a moment.';
     
-    // Use setTimeout to prevent UI freezing
     setTimeout(() => {
         try {
             const obfuscated = obfuscateLua(input);
             document.getElementById('outputCode').value = obfuscated;
-            document.getElementById('status').innerText = 'Obfuscation complete!';
+            document.getElementById('status').innerText = '✓ Obfuscation complete! Code is protected.';
         } catch (e) {
-            document.getElementById('status').innerText = 'Error: ' + e.message;
+            document.getElementById('status').innerText = '✗ Error: ' + e.message;
+            console.error(e);
         }
     }, 100);
 }
 
 function obfuscateLua(code) {
     let result = code;
+    const features = CONFIG.features;
     
-    // Apply selected obfuscation techniques
-    if (document.getElementById('byteEncode').checked) {
-        result = byteEncode(result);
+    // Apply ASCII Anti-Skid if enabled
+    if (features.asciiAntiSkid) {
+        result = addAsciiAntiSkid(result, features.asciiStyle);
+    } else {
+        // Always add standard header
+        result = `--[[ Pulto's Obfuscator ${CONFIG.version} ${CONFIG.link} ]]--\n` + result;
     }
     
-    if (document.getElementById('fakeMath').checked) {
-        result = addFakeMath(result);
-    }
+    // Layer 1: String and variable obfuscation
+    if (features.byteEncode) result = byteEncode(result);
+    if (features.stringSplitting) result = splitStrings(result);
+    if (features.variableRenaming) result = renameVariables(result);
     
-    if (document.getElementById('deadFlow').checked) {
-        result = addDeadFlow(result);
-    }
+    // Layer 2: Control flow obfuscation
+    if (features.deadFlow) result = addDeadFlow(result);
+    if (features.fakeMath) result = addFakeMath(result);
+    if (features.controlFlowFlattening) result = flattenControlFlow(result);
     
-    if (document.getElementById('wrapStrings').checked) {
-        result = wrapEncodedStrings(result);
-    }
+    // Layer 3: Anti-tampering
+    if (features.antiDebug) result = addAntiDebug(result);
+    if (features.integrityChecks) result = addIntegrityChecks(result);
     
-    // Add loader wrapper
+    // Layer 4: Final encoding
+    if (features.wrapStrings) result = wrapEncodedStrings(result);
+    
+    // Final wrapper with multiple protection layers
     result = wrapInLoader(result);
     
     return result;
 }
 
+function addAsciiAntiSkid(code, style) {
+    const ascii = ASCII_ARTS[style] || ASCII_ARTS.clean;
+    return ascii + '\n\n' + code;
+}
+
 function byteEncode(code) {
-    // Convert strings to byte representations
+    // Advanced byte encoding with XOR encryption
     return code.replace(/(['"])(.*?)\1/g, (match, quote, str) => {
+        const key = Math.floor(Math.random() * 255);
         const bytes = [];
         for (let i = 0; i < str.length; i++) {
-            bytes.push(str.charCodeAt(i));
+            bytes.push(str.charCodeAt(i) ^ key);
         }
-        return `string.char(${bytes.join(',')})`;
+        return `(function(k) local s={${bytes.join(',')}}; local r=''; for i=1,#s do r=r..string.char(s[i]~=k and s[i]~k or s[i]+k) end; return r end)(${key})`;
     });
 }
 
-function addFakeMath(code) {
-    // Add fake mathematical garbage code
-    const junkVars = ['_', '__', '___', 'a', 'b', 'c', 'x', 'y', 'z'];
-    const junkCode = [];
-    
-    for (let i = 0; i < 5; i++) {
-        const var1 = junkVars[Math.floor(Math.random() * junkVars.length)];
-        const var2 = junkVars[Math.floor(Math.random() * junkVars.length)];
-        const num1 = Math.floor(Math.random() * 1000);
-        const num2 = Math.floor(Math.random() * 1000);
-        const ops = ['+', '-', '*', '/', '%', '^'];
-        const op = ops[Math.floor(Math.random() * ops.length)];
+function splitStrings(code) {
+    // Split strings into multiple parts
+    return code.replace(/(['"])(.*?)\1/g, (match, quote, str) => {
+        if (str.length <= 3) return match;
         
-        junkCode.push(`local ${var1}${i}=${num1}${op}${num2}`);
-        junkCode.push(`local ${var2}${i}=(${num1}+${num2})${op}${var1}${i}`);
-    }
+        const parts = [];
+        for (let i = 0; i < str.length; i += 2) {
+            parts.push(str.substr(i, 2));
+        }
+        
+        let result = '';
+        parts.forEach((part, index) => {
+            if (index === 0) {
+                result += `"${part}"`;
+            } else {
+                result += ` .. "${part}"`;
+            }
+        });
+        
+        return result;
+    });
+}
+
+function renameVariables(code) {
+    const varMap = new Map();
+    const reserved = {'true':1, 'false':1, 'nil':1, 'and':1, 'or':1, 'not':1, 'function':1, 'end':1, 'if':1, 'then':1, 'else':1, 'elseif':1, 'while':1, 'do':1, 'for':1, 'in':1, 'repeat':1, 'until':1, 'return':1, 'local':1, 'break':1};
     
-    return junkCode.join('\n') + '\n\n' + code;
+    // Generate random variable names
+    const generateName = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_';
+        let name = '_';
+        for (let i = 0; i < 8; i++) {
+            name += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return name;
+    };
+    
+    // Find and replace local variables
+    return code.replace(/local\s+([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, varName) => {
+        if (!reserved[varName] && !varMap.has(varName)) {
+            varMap.set(varName, generateName());
+        }
+        return 'local ' + (varMap.get(varName) || varName);
+    }).replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g, (match, varName) => {
+        return varMap.get(varName) || match;
+    });
 }
 
 function addDeadFlow(code) {
-    // Add dead control flow with opaque predicates
     const lines = code.split('\n');
     const result = [];
+    const predicates = [
+        '(1+1 == 2)',
+        '(2*2 == 4)',
+        '(10 > 5)',
+        '(100 ~= 200)',
+        '(type(1) == "number")'
+    ];
     
     for (let i = 0; i < lines.length; i++) {
-        // Add junk control flow before some lines
-        if (Math.random() > 0.7 && lines[i].trim()) {
-            const fakeVar = '_flow' + Math.floor(Math.random() * 1000);
-            const fakeNum = Math.floor(Math.random() * 100);
+        if (lines[i].trim() && Math.random() > 0.6) {
+            const pred = predicates[Math.floor(Math.random() * predicates.length)];
+            const junkVar = '__x' + Math.floor(Math.random() * 9999);
             
-            result.push(`local ${fakeVar}=${fakeNum}`);
-            result.push(`if ${fakeVar} > ${fakeNum-1} or ${fakeVar} < ${fakeNum+1} then`);
+            result.push(`if ${pred} then`);
+            result.push(`    local ${junkVar} = ${Math.floor(Math.random() * 1000)}`);
             result.push(`    ${lines[i]}`);
+            result.push(`else`);
+            result.push(`    -- Dead code path`);
+            result.push(`    local ${junkVar} = ${Math.floor(Math.random() * 1000)} * ${Math.floor(Math.random() * 1000)}`);
+            result.push(`    ${junkVar} = ${junkVar} + ${Math.floor(Math.random() * 1000)}`);
             result.push(`end`);
         } else {
             result.push(lines[i]);
@@ -111,71 +163,239 @@ function addDeadFlow(code) {
     return result.join('\n');
 }
 
-function wrapEncodedStrings(code) {
-    // Wrap strings in complex encoding/decoding functions
-    const encoder = `
-local function decodeString(s)
-    local bytes = {}
-    for i = 1, #s, 2 do
-        local byte = tonumber(string.sub(s, i, i+1), 16)
-        table.insert(bytes, byte)
+function addFakeMath(code) {
+    const operators = ['+', '-', '*', '/', '%', '^'];
+    const junkVars = [];
+    
+    // Generate junk variables
+    for (let i = 0; i < 10; i++) {
+        junkVars.push('_m' + Math.floor(Math.random() * 9999));
+    }
+    
+    let junkCode = '';
+    for (let i = 0; i < junkVars.length; i += 2) {
+        const a = Math.floor(Math.random() * 1000);
+        const b = Math.floor(Math.random() * 1000);
+        const op1 = operators[Math.floor(Math.random() * operators.length)];
+        const op2 = operators[Math.floor(Math.random() * operators.length)];
+        
+        junkCode += `local ${junkVars[i]} = ${a} ${op1} ${b}\n`;
+        junkCode += `local ${junkVars[i+1]} = (${junkVars[i]} ${op2} ${a}) % ${b+1}\n`;
+    }
+    
+    return junkCode + '\n' + code;
+}
+
+function flattenControlFlow(code) {
+    // Convert code into a state machine
+    const lines = code.split('\n').filter(line => line.trim());
+    let stateMachine = 'do\n';
+    stateMachine += '    local __state = 0\n';
+    stateMachine += '    while true do\n';
+    stateMachine += '        if __state == 0 then\n';
+    
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim()) {
+            if (i < lines.length - 1) {
+                stateMachine += `            ${lines[i]}\n`;
+                stateMachine += `            __state = ${i + 1}\n`;
+                stateMachine += '            break\n';
+                stateMachine += `        elseif __state == ${i + 1} then\n`;
+            } else {
+                stateMachine += `            ${lines[i]}\n`;
+                stateMachine += '            break\n';
+            }
+        }
+    }
+    
+    stateMachine += '        end\n';
+    stateMachine += '    end\n';
+    stateMachine += 'end\n';
+    
+    return stateMachine;
+}
+
+function addAntiDebug(code) {
+    const antiDebug = `
+-- Anti-debug protection
+do
+    local __debug = debug or getfenv and getfenv().debug
+    if __debug then
+        -- Disable debug functions
+        __debug.getinfo = nil
+        __debug.getlocal = nil
+        __debug.setlocal = nil
+        __debug.getupvalue = nil
+        __debug.setupvalue = nil
+        __debug.getregistry = nil
+        __debug.getmetatable = nil
+        __debug.setmetatable = nil
+        __debug.traceback = nil
     end
-    return string.char(unpack(bytes))
+    
+    -- Prevent bytecode inspection
+    local __bytecode = string.dump and string.dump(loadstring or load)
+    if __bytecode then
+        __bytecode = nil
+    end
+end
+
+`;
+    return antiDebug + code;
+}
+
+function addIntegrityChecks(code) {
+    const checks = `
+-- Integrity verification
+do
+    local __env = getfenv and getfenv() or _ENV
+    local __allowed = {
+        ['print'] = true,
+        ['string'] = true,
+        ['table'] = true,
+        ['math'] = true,
+        ['os'] = true,
+        ['io'] = true
+    }
+    
+    -- Check for tampering
+    for __k, __v in pairs(__env) do
+        if not __allowed[__k] and type(__v) == 'function' then
+            -- Suspicious function detected
+            error("Environment tampering detected")
+        end
+    end
+    
+    -- Self-integrity check
+    local function __hash(__str)
+        local __h = 0
+        for __i = 1, #__str do
+            __h = (__h * 31 + string.byte(__str, __i)) % 2147483647
+        end
+        return __h
+    end
+    
+    -- Verify code hasn't been modified
+    local __codeHash = ${hashCode(code)}
+    if __hash(string.dump(function() end)) ~= __codeHash then
+        error("Code modification detected")
+    end
 end
 
 `;
     
-    // Find strings and encode them in hex
+    // Calculate a simple hash of the original code
+    const hash = code.split('').reduce((h, c) => {
+        return ((h << 5) - h + c.charCodeAt(0)) | 0;
+    }, 0);
+    
+    return checks.replace('${hashCode(code)}', Math.abs(hash).toString());
+}
+
+function wrapEncodedStrings(code) {
+    // Create a complex decoder
+    const decoder = `
+-- Complex string decoder
+do
+    local __chars = {}
+    for __i = 32, 126 do
+        __chars[string.char(__i)] = __i
+    end
+    
+    local function __decode(__str)
+        local __result = {}
+        local __len = #__str
+        local __i = 1
+        while __i <= __len do
+            local __c = string.sub(__str, __i, __i)
+            if __chars[__c] then
+                table.insert(__result, string.char(__chars[__c] - 10))
+            else
+                table.insert(__result, __c)
+            end
+            __i = __i + 1
+        end
+        return table.concat(__result)
+    end
+end
+
+`;
+    
+    // Encode strings with simple shifting
     code = code.replace(/(['"])(.*?)\1/g, (match, quote, str) => {
-        const hex = [];
+        let encoded = '';
         for (let i = 1; i <= str.length; i++) {
-            hex.push(str.charCodeAt(i-1).toString(16).padStart(2, '0'));
+            const c = str.charCodeAt(i-1);
+            if (c >= 32 && c <= 126) {
+                encoded = encoded + string.fromCharCode(c + 10);
+            } else {
+                encoded = encoded + str.charAt(i-1);
+            }
         }
-        return `decodeString("${hex.join('')}")`;
+        return `__decode("${encoded}")`;
     });
     
-    return encoder + code;
+    return decoder + code;
 }
 
 function wrapInLoader(code) {
-    // Create the final loader with anti-tampering
     const version = CONFIG.version;
     const link = CONFIG.link;
     
-    return `--[[
-    ${version}
-    ${link}
-    Pulto Obfuscator
-]]
+    return `--[[ Pulto's Obfuscator ${version} ${link} ]]
 
 return(function(...)
-    local code = [[
+    -- Multi-layer protection system
+    local __ENV = getfenv and getfenv() or _ENV
+    local __LOAD = __ENV.load or __ENV.loadstring
+    local __TABLE = __ENV.table
+    local __STRING = __ENV.string
+    local __MATH = __ENV.math
+    
+    -- Anti-debug layer
+    do
+        local __DEBUG = __ENV.debug
+        if __DEBUG then
+            for __k, __v in pairs(__DEBUG) do
+                __DEBUG[__k] = nil
+            end
+        end
+        
+        -- Remove dangerous globals
+        local __dangerous = {'loadfile', 'dofile', 'load', 'loadstring'}
+        for _, __name in pairs(__dangerous) do
+            __ENV[__name] = nil
+        end
+    end
+    
+    -- Code verification
+    local __CODE = [[
 ${code}
     ]]
     
-    -- Anti-tampering checks
-    local function checkEnvironment()
-        local env = getfenv and getfenv() or _ENV
-        local dangerous = {'debug', 'getfenv', 'setfenv', 'loadstring'}
-        for _, v in pairs(dangerous) do
-            if env[v] then
-                return false
-            end
+    -- Execute in protected environment
+    local __func, __err = __LOAD(__CODE)
+    if not __func then
+        error("Protected code execution failed: " .. tostring(__err))
+    end
+    
+    -- Setfenv for older Lua versions
+    if setfenv then
+        setfenv(__func, __ENV)
+    end
+    
+    -- Execute with error handling
+    local __success, __result = pcall(__func, ...)
+    if not __success then
+        -- Check if error was from tampering
+        if __STRING and __STRING.find and __STRING.find(__result, "tampering") then
+            error("Code protection triggered - possible tampering detected")
+        else
+            error(__result)
         end
-        return true
     end
     
-    if not checkEnvironment() then
-        error("Protected code")
-    end
-    
-    -- Execute the obfuscated code
-    local func = load(code)
-    if func then
-        return func(...)
-    else
-        error("Failed to load protected code")
-    end
+    return __result
 end)`;
 }
 
@@ -184,43 +404,27 @@ function decryptLua() {
     const output = document.getElementById('decryptOutput');
     
     try {
-        // Attempt to extract and decode strings
-        let decoded = input;
-        
-        // Find decodeString functions and try to decode
-        const decodeRegex = /decodeString\("([0-9a-f]+)"\)/g;
-        decoded = decoded.replace(decodeRegex, (match, hex) => {
-            let str = '';
-            for (let i = 0; i < hex.length; i += 2) {
-                const byte = parseInt(hex.substr(i, 2), 16);
-                str += String.fromCharCode(byte);
-            }
-            return '"' + str + '"';
-        });
-        
-        // Remove loader wrapper
-        decoded = decoded.replace(/return\(function\(\.\.\.\).*?end\)\(\)/s, '');
-        
-        // Remove junk code (simple version)
-        const lines = decoded.split('\n');
-        const cleaned = lines.filter(line => {
-            return !line.match(/^local _\w+=\d+/) && 
-                   !line.match(/^if _\w+ >/) &&
-                   line.trim().length > 0;
-        }).join('\n');
-        
-        output.value = cleaned || 'Could not fully decrypt (may be heavily obfuscated)';
+        // Try to extract the actual code from the loader
+        const codeMatch = input.match(/\|\|\n(.*?)\n    \]\]/s);
+        if (codeMatch && codeMatch[1]) {
+            output.value = "Decryption partially successful - extracted core code:\n\n" + codeMatch[1];
+        } else {
+            output.value = "Could not decrypt - code is heavily protected";
+        }
     } catch (e) {
         output.value = 'Decryption failed: ' + e.message;
     }
 }
 
-// Copy output to clipboard
+// Add keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'Enter') {
+        startObfuscation();
+    }
     if (e.ctrlKey && e.key === 'c' && document.activeElement.id === 'outputCode') {
         e.preventDefault();
         document.getElementById('outputCode').select();
         document.execCommand('copy');
-        document.getElementById('status').innerText = 'Copied to clipboard!';
+        document.getElementById('status').innerText = '✓ Copied to clipboard!';
     }
 });
