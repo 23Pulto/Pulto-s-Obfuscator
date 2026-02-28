@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pulto Obfuscator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="rain"></canvas>
+
+<div class="container">
+    <h1>PULTO OBFUSCATOR</h1>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('obf')">Obfuscate</button>
+        <button class="tab" onclick="switchTab('dec')">Decrypt</button>
+    </div>
+
+    <div id="obf" class="tabContent active">
+        <textarea id="inputCode" placeholder="Paste Lua code here..."></textarea>
+
+        <div class="toggles">
+            <label><input type="checkbox" id="byteEncode" checked> Byte Encode</label>
+            <label><input type="checkbox" id="fakeMath"> Fake Math Garbage</label>
+            <label><input type="checkbox" id="deadFlow"> Dead Control Flow</label>
+            <label><input type="checkbox" id="wrapStrings"> Wrapped Encoded Strings</label>
+        </div>
+
+        <button onclick="startObfuscation()">Obfuscate</button>
+        <p id="status"></p>
+
+        <textarea id="outputCode" placeholder="Output appears here..."></textarea>
+    </div>
+
+    <div id="dec" class="tabContent">
+        <textarea id="decryptInput" placeholder="Paste Lua code to attempt decrypt..."></textarea>
+        <button onclick="decryptLua()">Decrypt</button>
+        <textarea id="decryptOutput"></textarea>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="script.js"></script>
+<script src="rain.js"></script>
+</body>
+</html>
